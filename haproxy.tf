@@ -19,6 +19,29 @@ resource "null_resource" "install_haproxy" {
     }
 }
 
+resource "null_resource" "open_ports_firewalld" {
+    count = "${length(var.frontend)}"
+
+    connection {
+        type     = "ssh"
+        host = "${vsphere_virtual_machine.haproxy.default_ip_address}"
+        user     = "${var.ssh_user}"
+        password = "${var.ssh_password}"
+        private_key = "${var.ssh_private_key}"
+
+        bastion_host = "${var.bastion_ip_address}"
+        bastion_password = "${var.bastion_ssh_password}"
+        bastion_host_key = "${var.bastion_ssh_private_key}"
+    }
+
+    provisioner "remote-exec" {
+        when = "create"
+        inline = [
+            "sudo firewall-cmd --zone=public --add-port=${element(var.frontend, count.index)}/tcp"
+        ]
+    }
+}
+
 data "template_file" "haproxy_config_global" {
     template = <<EOF
 global
