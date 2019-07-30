@@ -54,10 +54,6 @@ EOF
 data "template_file" "haproxy_config_backend" {
     count = "${length(keys(var.backend))}"
 
-    depends_on = [
-        "null_resource.install_haproxy"
-    ]
-
     template = <<EOF
 backend bk_server${element(keys(var.backend), count.index)}
   balance roundrobin
@@ -66,6 +62,10 @@ EOF
 }
 
 resource "null_resource" "haproxy_cfg" {
+    depends_on = [
+        "null_resource.install_haproxy"
+    ]
+
     triggers = {
         defaults = "${data.template_file.haproxy_config_defaults.rendered}"
         global = "${data.template_file.haproxy_config_global.rendered}"
