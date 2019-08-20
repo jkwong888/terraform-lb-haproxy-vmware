@@ -32,7 +32,12 @@ variable "vsphere_resource_pool_id" {
   default     = ""
 }
 
-variable "network_id" {
+variable "private_network_id" {
+  description = "ID of network to provision VMs on. All VMs will be provisioned on the same network"
+  default     = "___INSERT_YOUR_OWN____"
+}
+
+variable "public_network_id" {
   description = "ID of network to provision VMs on. All VMs will be provisioned on the same network"
   default     = "___INSERT_YOUR_OWN____"
 }
@@ -64,13 +69,13 @@ variable "domain" {
   default     = ""
 }
 
-variable "staticipblock" {
-  description = "Specify start unused static ip cidr block to assign IP addresses to the cluster, e.g. 172.16.0.0/16.  Set to 0.0.0.0/0 for DHCP."
-  default     = "0.0.0.0/0"
+variable "private_ip_address" {
+  description = "Specify IP address"
+  default     = ""
 }
 
-variable "staticipblock_offset" {
-  description = "Specify the starting offset of the staticipblock to begin assigning IP addresses from.  e.g. with staticipblock 172.16.0.0/16, offset of 10 will cause IP address assignment to begin at 172.16.0.11."
+variable "public_ip_address" {
+  description = "Specify public IP address"
   default     = 0
 }
 
@@ -79,7 +84,12 @@ variable "gateway" {
   default     = ""
 }
 
-variable "netmask" {
+variable "private_netmask" {
+  description = "Netmask in CIDR notation when using static IPs. For example 16 or 24. Set to 0 to retrieve from DHCP"
+  default     = 0
+}
+
+variable "public_netmask" {
   description = "Netmask in CIDR notation when using static IPs. For example 16 or 24. Set to 0 to retrieve from DHCP"
   default     = 0
 }
@@ -146,4 +156,9 @@ variable "backend" {
   type = map
   default = {}
   description = "map of frontend listener ports to backend IP addresses, comma separated string"
+}
+
+variable "dependson" {
+    type = list
+    default = []
 }

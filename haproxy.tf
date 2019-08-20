@@ -1,4 +1,18 @@
+resource "null_resource" "dependency" {
+  triggers = {
+    all_dependencies = "${join(",", var.dependson)}"
+  }
+  
+  provisioner "local-exec" {
+      command = "echo ${join(",", var.dependson)}"
+  }
+}
+
 resource "null_resource" "install_haproxy" {
+    depends_on = [
+      "null_resource.dependency"
+    ]
+   
     connection {
         type     = "ssh"
         host = "${vsphere_virtual_machine.haproxy.default_ip_address}"
@@ -14,6 +28,8 @@ resource "null_resource" "install_haproxy" {
     provisioner "remote-exec" {
         when = "create"
         inline = [
+            "sudo subscription-manager repos --disable='*'",
+            "sudo subscription-manager repos --enable='rhel-7-server-rpms'",
             "sudo yum -y install haproxy"
         ]
     }

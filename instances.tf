@@ -34,7 +34,12 @@ resource "vsphere_virtual_machine" "haproxy" {
   # Network specifications
   ####
   network_interface {
-    network_id   = "${var.network_id}"
+    network_id   = "${var.private_network_id}"
+    adapter_type = "${data.vsphere_virtual_machine.template.network_interface_types[0]}"
+  }
+
+  network_interface {
+    network_id   = "${var.public_network_id != "" ? var.public_network_id : var.private_network_id}"
     adapter_type = "${data.vsphere_virtual_machine.template.network_interface_types[0]}"
   }
 
@@ -50,8 +55,13 @@ resource "vsphere_virtual_machine" "haproxy" {
         domain    = "${var.domain != "" ? var.domain : format("%s.local", var.instance_name)}"
       }
       network_interface {
-        ipv4_address  = "${var.staticipblock != "0.0.0.0/0" ? cidrhost(var.staticipblock, var.staticipblock_offset) : ""}"
-        ipv4_netmask  = "${var.netmask}"
+        ipv4_address  = "${var.private_ip_address}"
+        ipv4_netmask  = "${var.private_netmask}"
+      }
+
+      network_interface {
+        ipv4_address  = "${var.public_network_id != "" ? var.public_ip_address : ""}"
+        ipv4_netmask  = "${var.public_network_id != "" ? var.public_netmask : ""}"
       }
 
       ipv4_gateway    = "${var.gateway}"
