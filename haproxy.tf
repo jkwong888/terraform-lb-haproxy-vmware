@@ -2,10 +2,10 @@ resource "null_resource" "dependency" {
   triggers = {
     all_dependencies = "${join(",", var.dependson)}"
   }
-  
-  provisioner "local-exec" {
-      command = "echo ${join(",", var.dependson)}"
-  }
+}
+
+locals {
+  haproxy_ip = "${var.datastore_cluster_id == "" ? "${vsphere_virtual_machine.haproxy.0.default_ip_address}" : "${vsphere_virtual_machine.haproxy_ds_cluster.0.default_ip_address}" }"
 }
 
 resource "null_resource" "install_haproxy" {
@@ -15,7 +15,7 @@ resource "null_resource" "install_haproxy" {
    
     connection {
         type     = "ssh"
-        host = "${vsphere_virtual_machine.haproxy.default_ip_address}"
+        host     = "${local.haproxy_ip}"
         user     = "${var.ssh_user}"
         password = "${var.ssh_password}"
         private_key = "${var.ssh_private_key}"
@@ -40,7 +40,7 @@ resource "null_resource" "open_ports_firewalld" {
 
     connection {
         type     = "ssh"
-        host = "${vsphere_virtual_machine.haproxy.default_ip_address}"
+        host     = "${local.haproxy_ip}"
         user     = "${var.ssh_user}"
         password = "${var.ssh_password}"
         private_key = "${var.ssh_private_key}"
@@ -54,6 +54,27 @@ resource "null_resource" "open_ports_firewalld" {
         when = "create"
         inline = [
             "sudo firewall-cmd --zone=public --add-port=${element(var.frontend, count.index)}/tcp"
+        ]
+    }
+}
+
+resource "null_resource" "selinux_allow" {
+    connection {
+        type     = "ssh"
+        host     = "${local.haproxy_ip}"
+        user     = "${var.ssh_user}"
+        password = "${var.ssh_password}"
+        private_key = "${var.ssh_private_key}"
+
+        bastion_host = "${var.bastion_ip_address}"
+        bastion_password = "${var.bastion_ssh_password}"
+        bastion_host_key = "${var.bastion_ssh_private_key}"
+    }
+
+    provisioner "remote-exec" {
+        when = "create"
+        inline = [
+            "sudo setsebool -P haproxy_connect_any=1"
         ]
     }
 }
@@ -96,13 +117,14 @@ data "template_file" "haproxy_config_backend" {
     template = <<EOF
 backend bk_server${element(keys(var.backend), count.index)}
   balance roundrobin
-${join("\n", formatlist("  server srv%v %v:%v maxconn 2048", split(",", lookup(var.backend, element(keys(var.backend), count.index))), split(",", lookup(var.backend, element(keys(var.backend), count.index))), element(keys(var.backend), count.index)))}
+${join("\n", formatlist("  server srv%v %v:%v check fall 3 rise 2 maxconn 2048", split(",", lookup(var.backend, element(keys(var.backend), count.index))), split(",", lookup(var.backend, element(keys(var.backend), count.index))), element(keys(var.backend), count.index)))}
 EOF
 }
 
 resource "null_resource" "haproxy_cfg" {
     depends_on = [
-        "null_resource.install_haproxy"
+        "null_resource.install_haproxy",
+        "null_resource.selinux_allow"
     ]
 
     triggers = {
@@ -114,7 +136,7 @@ resource "null_resource" "haproxy_cfg" {
 
     connection {
         type = "ssh"
-        host = "${vsphere_virtual_machine.haproxy.default_ip_address}"
+        host     = "${local.haproxy_ip}"
         user     = "${var.ssh_user}"
         password = "${var.ssh_password}"
         private_key = "${var.ssh_private_key}"

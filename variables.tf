@@ -43,9 +43,15 @@ variable "public_network_id" {
 }
 
 variable "datastore_id" {
-  description = "ID of datastore to use for the VMs"
+  description = "ID of datastore to use for the VMs, only set one of datastore_id or datastore_cluster_id"
   default     = ""
 }
+
+variable "datastore_cluster_id" {
+  description = "ID of datastore cluster to use for the VMs, only set one of datastore_id or datastore_cluster_id"
+  default     = ""
+}
+
 
 ## Note
 # Because of https://github.com/terraform-providers/terraform-provider-vsphere/issues/271 templates must be converted to VMs on ESX 5.5 (and possibly other)
