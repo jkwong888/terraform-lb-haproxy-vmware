@@ -3,7 +3,7 @@ locals {
 }
 
 module "rhnregister" {
-  source             = "../terraform-openshift-rhnregister"
+  source             = "github.com/ibm-cloud-architecture/terraform-openshift-rhnregister"
 
   ssh_user          = "${var.template_ssh_user}"
   ssh_password      = "${var.template_ssh_password}"
