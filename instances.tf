@@ -1,10 +1,9 @@
 
-##################################
 #### Create the VMs
 ##################################
 resource "vsphere_virtual_machine" "haproxy" {
   count     = "${var.datastore_id != "" ? 1 : 0}"
-  folder     = "${var.folder}"
+  folder     = "${var.folder_path}"
 
   #####
   # VM Specifications
@@ -23,7 +22,7 @@ resource "vsphere_virtual_machine" "haproxy" {
   scsi_type     = "${data.vsphere_virtual_machine.template.scsi_type}"
 
   disk {
-      label            = "${lower(var.instance_name)}-haproxy.vmdk"
+      label            = "disk0"
       size             = "${var.boot_disk["disk_size"]        != "" ? var.boot_disk["disk_size"]        : data.vsphere_virtual_machine.template.disks.0.size}"
       eagerly_scrub    = "${var.boot_disk["eagerly_scrub"]    != "" ? var.boot_disk["eagerly_scrub"]    : data.vsphere_virtual_machine.template.disks.0.eagerly_scrub}"
       thin_provisioned = "${var.boot_disk["thin_provisioned"] != "" ? var.boot_disk["thin_provisioned"] : data.vsphere_virtual_machine.template.disks.0.thin_provisioned}"
@@ -34,14 +33,12 @@ resource "vsphere_virtual_machine" "haproxy" {
   ####
   # Network specifications
   ####
-  network_interface {
-    network_id   = "${var.private_network_id}"
-    adapter_type = "${data.vsphere_virtual_machine.template.network_interface_types[0]}"
-  }
-
-  network_interface {
-    network_id   = "${var.public_network_id != "" ? var.public_network_id : var.private_network_id}"
-    adapter_type = "${data.vsphere_virtual_machine.template.network_interface_types[0]}"
+  dynamic "network_interface" {
+    for_each = compact(concat(list(var.public_network_id, var.private_network_id)))
+    content {
+      network_id   = "${network_interface.value}"
+      adapter_type = "${data.vsphere_virtual_machine.template.network_interface_types[0]}"
+    }
   }
 
   ####
@@ -53,20 +50,20 @@ resource "vsphere_virtual_machine" "haproxy" {
     customize {
       linux_options {
         host_name = "${lower(var.instance_name)}-haproxy"
-        domain    = "${var.domain != "" ? var.domain : format("%s.local", var.instance_name)}"
-      }
-      network_interface {
-        ipv4_address  = "${var.private_ip_address}"
-        ipv4_netmask  = "${var.private_netmask}"
+        domain    = "${var.private_domain != "" ? var.private_domain : format("%s.local", var.instance_name)}"
       }
 
-      network_interface {
-        ipv4_address  = "${var.public_network_id != "" ? var.public_ip_address : ""}"
-        ipv4_netmask  = "${var.public_network_id != "" ? var.public_netmask : "0"}"
+      dynamic "network_interface" {
+        for_each = compact(concat(list(var.public_ip_address, var.private_ip_address)))
+        content {
+          ipv4_address = "${network_interface.value}"
+          ipv4_netmask = "${element(compact(concat(list(var.public_netmask), list(var.private_netmask))), network_interface.key)}"
+        }
       }
 
-      ipv4_gateway    = "${var.gateway}"
+      ipv4_gateway    = "${var.public_gateway != "" ? var.public_gateway : var.private_gateway}"
       dns_server_list = "${var.dns_servers}"
+      dns_suffix_list = compact(list(var.private_domain, var.public_domain))
     }
   }
 }
@@ -74,7 +71,7 @@ resource "vsphere_virtual_machine" "haproxy" {
 
 resource "vsphere_virtual_machine" "haproxy_ds_cluster" {
   count     = "${var.datastore_cluster_id != "" ? 1 : 0}"
-  folder    = "${var.folder}"
+  folder    = "${var.folder_path}"
 
   #####
   # VM Specifications
@@ -93,7 +90,7 @@ resource "vsphere_virtual_machine" "haproxy_ds_cluster" {
   scsi_type     = "${data.vsphere_virtual_machine.template.scsi_type}"
 
   disk {
-      label            = "${lower(var.instance_name)}-haproxy.vmdk"
+      label            = "disk0"
       size             = "${var.boot_disk["disk_size"]        != "" ? var.boot_disk["disk_size"]        : data.vsphere_virtual_machine.template.disks.0.size}"
       eagerly_scrub    = "${var.boot_disk["eagerly_scrub"]    != "" ? var.boot_disk["eagerly_scrub"]    : data.vsphere_virtual_machine.template.disks.0.eagerly_scrub}"
       thin_provisioned = "${var.boot_disk["thin_provisioned"] != "" ? var.boot_disk["thin_provisioned"] : data.vsphere_virtual_machine.template.disks.0.thin_provisioned}"
@@ -104,14 +101,12 @@ resource "vsphere_virtual_machine" "haproxy_ds_cluster" {
   ####
   # Network specifications
   ####
-  network_interface {
-    network_id   = "${var.private_network_id}"
-    adapter_type = "${data.vsphere_virtual_machine.template.network_interface_types[0]}"
-  }
-
-  network_interface {
-    network_id   = "${var.public_network_id != "" ? var.public_network_id : var.private_network_id}"
-    adapter_type = "${data.vsphere_virtual_machine.template.network_interface_types[0]}"
+  dynamic "network_interface" {
+    for_each = compact(concat(list(var.public_network_id, var.private_network_id)))
+    content {
+      network_id   = "${network_interface.value}"
+      adapter_type = "${data.vsphere_virtual_machine.template.network_interface_types[0]}"
+    }
   }
 
   ####
@@ -122,21 +117,23 @@ resource "vsphere_virtual_machine" "haproxy_ds_cluster" {
 
     customize {
       linux_options {
-        host_name = "${lower(var.instance_name)}-haproxy"
-        domain    = "${var.domain != "" ? var.domain : format("%s.local", var.instance_name)}"
-      }
-      network_interface {
-        ipv4_address  = "${var.private_ip_address}"
-        ipv4_netmask  = "${var.private_netmask}"
+        host_name = "${lower(var.instance_name)}-lb"
+        domain    = "${var.private_domain != "" ? var.private_domain : format("%s.local", var.instance_name)}"
       }
 
-      network_interface {
-        ipv4_address  = "${var.public_network_id != "" ? var.public_ip_address : ""}"
-        ipv4_netmask  = "${var.public_network_id != "" ? var.public_netmask : "0"}"
+      dynamic "network_interface" {
+        for_each = compact(concat(list(var.public_ip_address, var.private_ip_address)))
+        content {
+          ipv4_address = "${network_interface.value}"
+          ipv4_netmask = "${element(compact(concat(list(var.public_netmask), list(var.private_netmask))), network_interface.key)}"
+        }
       }
 
-      ipv4_gateway    = "${var.gateway}"
+      ipv4_gateway    = "${var.public_gateway != "" ? var.public_gateway : var.private_gateway}"
       dns_server_list = "${var.dns_servers}"
+      dns_suffix_list = compact(list(var.private_domain, var.public_domain))
     }
   }
+  
+
 }

@@ -8,7 +8,7 @@ variable "vsphere_server" {
 
 # Set username/password as environment variables VSPHERE_USER and VSPHERE_PASSWORD
 
-variable "allow_unverified_ssl" {
+variable "vsphere_allow_unverified_ssl" {
   description = "Allows terraform vsphere provider to communicate with vsphere servers with self signed certificates"
   default     = "true"
 }
@@ -56,12 +56,12 @@ variable "datastore_cluster_id" {
 ## Note
 # Because of https://github.com/terraform-providers/terraform-provider-vsphere/issues/271 templates must be converted to VMs on ESX 5.5 (and possibly other)
 variable "template" {
-  description = "ID of template or VM to clone for the VM creations. "
+  description = "Name of template or VM to clone for the VM creations. "
   default     = "___INSERT_YOUR_OWN____"
 }
 
-variable "folder" {
-  description = "Name of VM Folder to provision the new VMs in. The folder must exist"
+variable "folder_path" {
+  description = "Path of VM Folder to provision the new VMs in. The folder must exist"
   default     = ""
 }
 
@@ -70,9 +70,8 @@ variable "instance_name" {
   default     = "icptest"
 }
 
-variable "domain" {
-  description = "Specify domain name to be used for linux customization on the VMs, or leave blank to use <instance_name>.icp"
-  default     = ""
+variable "private_domain" {
+  description = "domain of the private interface"
 }
 
 variable "private_ip_address" {
@@ -85,7 +84,12 @@ variable "public_ip_address" {
   default     = 0
 }
 
-variable "gateway" {
+variable "public_gateway" {
+  description = "Default gateway for the newly provisioned VMs. Leave blank to use DHCP"
+  default     = ""
+}
+
+variable "private_gateway" {
   description = "Default gateway for the newly provisioned VMs. Leave blank to use DHCP"
   default     = ""
 }
@@ -99,6 +103,12 @@ variable "public_netmask" {
   description = "Netmask in CIDR notation when using static IPs. For example 16 or 24. Set to 0 to retrieve from DHCP"
   default     = 0
 }
+
+variable "public_domain" {
+  description = "domain of the public interface"
+  default = ""
+}
+
 
 variable "dns_servers" {
   description = "DNS Servers to configure on VMs"
@@ -120,7 +130,7 @@ variable "boot_disk" {
   type = map
 
   default = {
-    disk_size             = "100"      # Specify size or leave empty to use same size as template.
+    disk_size             = ""      # Specify size or leave empty to use same size as template.
     thin_provisioned      = "true"      # True or false. Whether to use thin provisioning on the disk. Leave blank to use same as template
     eagerly_scrub         = "false"      # True or false. If set to true disk space is zeroed out on VM creation. Leave blank to use same as template
     keep_disk_on_remove   = "false" # Set to 'true' to not delete a disk on removal.
@@ -128,6 +138,10 @@ variable "boot_disk" {
 }
 
 variable "bastion_ip_address" {
+  default = ""
+}
+
+variable "bastion_ssh_user" {
   default = ""
 }
 
@@ -139,16 +153,15 @@ variable "bastion_ssh_password" {
   default = ""
 }
 
-
-variable "ssh_private_key" {
+variable "template_ssh_private_key" {
   default = ""
 }
 
-variable "ssh_user" {
+variable "template_ssh_user" {
   default = ""
 }
 
-variable "ssh_password" {
+variable "template_ssh_password" {
   default = ""
 }
 
@@ -167,4 +180,19 @@ variable "backend" {
 variable "dependson" {
     type = list
     default = []
+}
+
+####################################
+# RHN Registration
+####################################
+variable "rhn_username" {
+  default = ""
+}
+
+variable "rhn_password" {
+  default = ""
+
+}
+variable "rhn_poolid" {
+  default = ""
 }
