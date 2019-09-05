@@ -39,7 +39,7 @@ variable "private_network_id" {
 
 variable "public_network_id" {
   description = "ID of network to provision VMs on. All VMs will be provisioned on the same network"
-  default     = "___INSERT_YOUR_OWN____"
+  default     = ""
 }
 
 variable "datastore_id" {
@@ -76,12 +76,11 @@ variable "private_domain" {
 
 variable "private_ip_address" {
   description = "Specify IP address"
-  default     = ""
 }
 
 variable "public_ip_address" {
   description = "Specify public IP address"
-  default     = 0
+  default     = ""
 }
 
 variable "public_gateway" {
@@ -91,17 +90,15 @@ variable "public_gateway" {
 
 variable "private_gateway" {
   description = "Default gateway for the newly provisioned VMs. Leave blank to use DHCP"
-  default     = ""
 }
 
 variable "private_netmask" {
   description = "Netmask in CIDR notation when using static IPs. For example 16 or 24. Set to 0 to retrieve from DHCP"
-  default     = 0
 }
 
 variable "public_netmask" {
   description = "Netmask in CIDR notation when using static IPs. For example 16 or 24. Set to 0 to retrieve from DHCP"
-  default     = 0
+  default     = ""
 }
 
 variable "public_domain" {
