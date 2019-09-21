@@ -183,13 +183,21 @@ variable "dependson" {
 # RHN Registration
 ####################################
 variable "rhn_username" {
+  description = "deprecated"
   default = ""
 }
 
 variable "rhn_password" {
+  description = "deprecated"
   default = ""
 
 }
 variable "rhn_poolid" {
+  description = "deprecated"
   default = ""
+}
+
+variable "install_from_epel" {
+  description = "install haproxy from epel, useful if you don't want to subscribe to RHN"
+  default = "true"
 }

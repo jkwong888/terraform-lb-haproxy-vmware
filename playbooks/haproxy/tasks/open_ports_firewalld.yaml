@@ -1,0 +1,15 @@
+- name: Gather service facts
+  service_facts:
+  register: services_state
+
+- name: open ports on firewall
+  firewalld:
+    port: "{{ item }}/tcp"
+    state: enabled
+    immediate: yes
+    permanent: yes
+    zone: public
+  when: ansible_facts.services['firewalld.service'] is defined and
+        ansible_facts.services['firewalld.service'].state == 'running'
+  with_list: "{{ frontend_ports }}"
+    

@@ -1,0 +1,11 @@
+---
+- hosts: nodes
+  tasks:
+  - name: Install HAProxy
+    include: tasks/install_haproxy.yaml
+  - name: Open Ports on firewalld
+    include: tasks/open_ports_firewalld.yaml
+  - name: setsebool
+    include: tasks/setsebool.yaml
+  - name: configure haproxy
+    include: tasks/haproxy_config.yaml

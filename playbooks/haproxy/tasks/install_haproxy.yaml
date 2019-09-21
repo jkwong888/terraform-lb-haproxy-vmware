@@ -1,0 +1,24 @@
+- name: get package facts
+  package_facts:
+    manager: auto
+
+- name: get haproxy rpm from centos repo
+  shell: wget -r -l1 -np -nd http://mirror.centos.org/centos/7/os/x86_64/Packages/ -P /tmp -A 'haproxy*.rpm'
+  when: ansible_facts.packages.haproxy is not defined
+  warn: no
+
+- name: install haproxy
+  yum:
+    name: "{{ item }}"
+    state: present
+  register: haproxy_installed
+  until: haproxy_installed is succeeded
+  with_fileglob: "/tmp/haproxy*.rpm"
+  when: ansible_facts.packages.haproxy is not defined
+
+- name: remove temp haproxy rpm
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_fileglob: "/tmp/haproxy*.rpm"
+

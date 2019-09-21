@@ -1,0 +1,27 @@
+global
+    user haproxy
+    group haproxy
+    daemon
+    maxconn 4096 
+
+defaults
+    mode    tcp
+    balance leastconn
+    timeout client      30000ms
+    timeout server      30000ms
+    timeout connect      3000ms
+    retries 3
+
+{% for port in frontend_ports %}
+frontend fr_server{{ port }}
+  bind 0.0.0.0:{{ port }}
+  default_backend bk_server{{ port }}
+{% endfor %}
+
+{% for key, value in backends.iteritems() %}
+backend bk_server{{ key }}
+  balance roundrobin
+{% for backend in value.split(",") %}
+  server srv{{ backend }} {{ backend }}:{{ key }} check fall 3 rise 2 maxconn 2048
+{% endfor %}
+{% endfor %}

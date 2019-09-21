@@ -10,7 +10,7 @@ resource "vsphere_virtual_machine" "haproxy" {
   ####
   resource_pool_id = "${var.vsphere_resource_pool_id}"
 
-  name      = "${lower(var.instance_name)}-haproxy"
+  name      = "${lower(var.instance_name)}-lb"
   num_cpus  = "${var.vcpu}"
   memory    = "${var.memory}"
 
@@ -49,7 +49,7 @@ resource "vsphere_virtual_machine" "haproxy" {
 
     customize {
       linux_options {
-        host_name = "${lower(var.instance_name)}-haproxy"
+        host_name = "${lower(var.instance_name)}-lb"
         domain    = "${var.private_domain != "" ? var.private_domain : format("%s.local", var.instance_name)}"
       }
 
@@ -78,7 +78,7 @@ resource "vsphere_virtual_machine" "haproxy_ds_cluster" {
   ####
   resource_pool_id = "${var.vsphere_resource_pool_id}"
 
-  name      = "${lower(var.instance_name)}-haproxy"
+  name      = "${lower(var.instance_name)}-lb"
   num_cpus  = "${var.vcpu}"
   memory    = "${var.memory}"
 

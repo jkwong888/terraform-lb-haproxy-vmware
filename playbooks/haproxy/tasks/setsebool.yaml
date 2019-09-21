@@ -1,0 +1,5 @@
+- name: set haproxy_connect_any se boolean
+  seboolean:
+    name: haproxy_connect_any
+    state: yes
+    persistent: yes

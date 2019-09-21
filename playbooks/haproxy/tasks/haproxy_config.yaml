@@ -1,0 +1,32 @@
+---
+
+- name: haproxy.cfg
+  template:
+    src: haproxy.cfg.j2
+    dest: /tmp/haproxy.cfg
+ 
+- name: test haproxy configuration
+  shell: haproxy -c -f /tmp/haproxy.cfg
+
+- name: copy haproxy configuration
+  copy:
+    src: /tmp/haproxy.cfg
+    dest: /etc/haproxy/haproxy.cfg
+    backup: yes
+
+- name: remove temp file
+  file:
+    path: /tmp/haproxy.cfg
+    state: absent
+
+- name: start haproxy
+  systemd:
+    name: haproxy
+    state: started
+    enabled: yes
+
+- name: reload haproxy
+  systemd:
+    name: haproxy
+    state: reloaded
+    enabled: yes
